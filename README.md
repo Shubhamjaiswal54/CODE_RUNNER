@@ -1,4 +1,4 @@
-# Codex — Online Code Execution Platform
+# CODE RUNNER — Online Code Execution Platform
 
 A minimal online code judge/runner. Users submit JavaScript, Python, or C++ code through a web UI; a backend queues the submission in Redis; a worker process picks it up, executes it, and writes the result back to a database. The frontend polls for the result and displays it.
 
