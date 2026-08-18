@@ -1,0 +1,8 @@
+#include <iostream> // Library for input and output streams
+
+int main() {
+    // Prints message to the console
+    std::cout << "Hello, World!" << std::endl; 
+    
+    return 0; // Indicates successful execution
+}
