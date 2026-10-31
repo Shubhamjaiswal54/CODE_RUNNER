@@ -78,7 +78,7 @@ const LANGUAGES: Record<string, LangConfig> = {
   },
   py: {
     file: "main.py",
-    run: (dir) => runProcess("python3", ["main.py"], dir, RUN_TIMEOUT_MS),
+    run: (dir) => runProcess("python", ["main.py"], dir, RUN_TIMEOUT_MS),
   },
   "c++": {
     file: "main.cpp",
@@ -107,7 +107,7 @@ export async function execute(lang: string, code: string): Promise<Outcome> {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "code-runner-"));
   try {
     await fs.writeFile(path.join(dir, config.file), code);
-
+    
     if (config.compile) {
       const compilation = await config.compile(dir);
       if (!isSuccess(compilation)) {

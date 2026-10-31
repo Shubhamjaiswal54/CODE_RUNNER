@@ -68,6 +68,7 @@ app.get("/submission/:submissionId", async (req: Request<{ submissionId: string 
     res.json({ submission });
 });
 
+
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
     const status = (err as { status?: unknown }).status;
     if (typeof status === "number" && status >= 400 && status < 500) {
