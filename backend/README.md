@@ -1,15 +1,13 @@
 # backend
 
-To install dependencies:
+Express API that stores submissions in Postgres and queues them in Redis.
 
 ```bash
-bun install
+cp .env.example .env   # then fill in DATABASE_URL
+npm install
+npm run migrate        # apply migrations
+npm run generate       # generate the Prisma client (also used by the worker)
+npm run dev
 ```
 
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+`prisma/schema.prisma` here is the single source of truth for the database schema.
