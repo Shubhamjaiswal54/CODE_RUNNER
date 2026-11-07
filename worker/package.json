@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch index.ts",
     "start": "tsx index.ts",
+    "test": "tsx --test runner.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

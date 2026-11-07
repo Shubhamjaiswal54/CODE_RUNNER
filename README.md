@@ -47,7 +47,31 @@ A minimal online code judge/runner. Users submit JavaScript, Python, or C++ code
 └── worker/          # Redis consumer that executes submitted code (uses backend's Prisma client)
 ```
 
-## Prerequisites
+## Quick Start (Docker)
+
+With [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed, start everything with:
+
+```bash
+docker compose up --build
+```
+
+Then open http://localhost:3000. This starts Postgres, Redis, the backend (which applies migrations on startup), the worker (with `node`, `python3` and `g++` installed) and the frontend. Stop with `Ctrl+C`; `docker compose down -v` also deletes the database.
+
+Running code inside the worker container gives some isolation from your machine, and the container has memory, CPU and process limits. It is still not a real sandbox: submitted code shares one container and has network access.
+
+### Hybrid: databases in Docker, code on your machine
+
+For development with hot reload, run only the databases in Docker and the apps locally:
+
+```bash
+docker compose up postgres redis
+```
+
+The `.env.example` files already point at these, so continue with the manual setup below and skip installing Redis and PostgreSQL.
+
+## Manual Setup
+
+### Prerequisites
 
 - Node.js (v18+ recommended) for the backend and worker
 - [Bun](https://bun.com) for the frontend
@@ -55,13 +79,9 @@ A minimal online code judge/runner. Users submit JavaScript, Python, or C++ code
 - PostgreSQL
 - `node`, `python3` and `g++` available on the worker's `PATH`
 
-## Setup
+### Setup
 
-Copy `.env.example` to `.env` in both `backend/` and `worker/` and set `DATABASE_URL`:
-
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/coderunner"
-```
+Copy `.env.example` to `.env` in both `backend/` and `worker/`, and change `DATABASE_URL` if your Postgres uses different credentials.
 
 ```bash
 # Backend first: the worker imports the Prisma client generated here
@@ -76,12 +96,12 @@ cd ../frontend && bun install
 
 To point the frontend at a backend other than `http://localhost:5000`, set `BUN_PUBLIC_API_URL`. If the frontend is not served from `http://localhost:3000`, set `CORS_ORIGIN` in `backend/.env`.
 
-## Running
+### Running
 
 Start each piece in its own terminal:
 
 ```bash
-# 1. Redis
+# 1. Redis (skip if using `docker compose up postgres redis`)
 redis-server
 
 # 2. Backend (port 5000)
@@ -98,6 +118,21 @@ bun dev
 ```
 
 Open the frontend, pick a language, write some code, and hit Run.
+
+## Testing
+
+```bash
+# Unit tests for the execution runtime (no database or Redis needed)
+cd worker && npm test
+
+# These need the full stack running (docker compose up, or the manual setup)
+cd backend
+npm run test:e2e     # validation + execution checks through the real API
+npm run test:load    # throughput and latency; tune with TOTAL, CONCURRENCY, LANGS=js,py,c++
+npm run test:crash   # kills the worker mid-job and checks the job still completes; ROUNDS=5
+```
+
+All scripts read `API_URL` (default `http://localhost:5000`). `test:crash` uses `docker compose kill/start worker` by default; set `KILL_CMD` and `START_CMD` to test a worker started another way.
 
 ## API
 

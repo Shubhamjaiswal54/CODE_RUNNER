@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: coderunner
+      POSTGRES_PASSWORD: coderunner
+      POSTGRES_DB: coderunner
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coderunner -d coderunner"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://coderunner:coderunner@postgres:5432/coderunner
+      REDIS_URL: redis://redis:6379
+      PORT: 5000
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://coderunner:coderunner@postgres:5432/coderunner
+      REDIS_URL: redis://redis:6379
+      WORKER_ID: docker-1
+    # Limits for the whole worker container, including the code it runs.
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # The backend applies database migrations on startup.
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      # The browser calls the backend directly, so this must be reachable from your machine.
+      BUN_PUBLIC_API_URL: http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
